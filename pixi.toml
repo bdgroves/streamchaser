@@ -1,0 +1,31 @@
+[project]
+name        = "streamchaser"
+version     = "1.0.0"
+description = "USGS stream gauge monitor — fetches, charts, and posts flow data to Twitter/X and Bluesky."
+authors     = ["Your Name <you@example.com>"]
+channels    = ["conda-forge"]
+platforms   = ["linux-64", "osx-arm64", "osx-64"]
+
+[dependencies]
+python      = ">=3.12"
+matplotlib  = ">=3.8"
+numpy       = ">=1.26"
+requests    = ">=2.31"
+pillow      = ">=10.0"
+
+[pypi-dependencies]
+tweepy  = ">=4.14"
+atproto = ">=0.0.46"
+
+[tasks]
+# Run the bot
+run   = "python -m streamchaser"
+# Generate a chart from mock data for visual testing (no API calls, no posting)
+chart = "python -m streamchaser.chart_preview"
+
+[feature.dev.dependencies]
+pytest = ">=8.0"
+
+[environments]
+default = { solve-group = "default" }
+dev     = { features = ["dev"], solve-group = "default" }

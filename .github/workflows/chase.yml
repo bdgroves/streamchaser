@@ -1,0 +1,59 @@
+name: Streamchaser
+
+on:
+  schedule:
+    # Every 6 hours. Adjust as needed:
+    #   Hourly:     '0 * * * *'
+    #   Every 6h:   '0 */6 * * *'
+    #   Every 12h:  '0 */12 * * *'
+    #   Daily 8am PT: '0 15 * * *'
+    - cron: '0 */6 * * *'
+  workflow_dispatch:   # manual trigger from Actions tab
+
+jobs:
+  chase:
+    name: Fetch · Chart · Post
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    env:
+      # ── Station ─────────────────────────────────────────────────────────
+      # Official USGS name: "Big C AB Whites Gulch NR Groveland CA"
+      # Operated in cooperation with Turlock Irrigation District
+      USGS_STATION_ID:   "11284400"
+      USGS_STATION_NAME: "Big Creek @ Whites Gulch"
+      USGS_HASHTAGS:     "#USGS #BigCreek #Groveland"
+
+      # ── Toggle platforms ─────────────────────────────────────────────────
+      POST_TWITTER: "true"
+      POST_BLUESKY: "true"
+
+      CHART_OUTPUT_DIR: "/tmp"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: latest
+          cache: true
+
+      - name: Run Streamchaser
+        env:
+          TWITTER_API_KEY:       ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET:    ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN:  ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
+          BLUESKY_HANDLE:        ${{ secrets.BLUESKY_HANDLE }}
+          BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: pixi run run
+
+      - name: Save chart image
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chart-${{ github.run_number }}
+          path: /tmp/streamchaser_*.png
+          retention-days: 5

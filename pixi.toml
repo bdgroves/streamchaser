@@ -1,4 +1,4 @@
-[project]
+﻿[workspace]
 name        = "streamchaser"
 version     = "1.0.0"
 description = "USGS stream gauge monitor — fetches, charts, and posts flow data to Twitter/X and Bluesky."
@@ -12,15 +12,15 @@ matplotlib  = ">=3.8"
 numpy       = ">=1.26"
 requests    = ">=2.31"
 pillow      = ">=10.0"
+hatchling   = ">=1.21"
 
 [pypi-dependencies]
-tweepy  = ">=4.14"
-atproto = ">=0.0.46"
+tweepy       = ">=4.14"
+atproto      = ">=0.0.46"
+streamchaser = { path = ".", editable = true }
 
 [tasks]
-# Run the bot
 run   = "python -m streamchaser"
-# Generate a chart from mock data for visual testing (no API calls, no posting)
 chart = "python -m streamchaser.chart_preview"
 
 [feature.dev.dependencies]

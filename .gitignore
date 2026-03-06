@@ -12,9 +12,11 @@ build/
 # Pixi
 .pixi/
 
-# Generated chart images (don't commit, they're ephemeral)
+# Generated chart images (ephemeral — don't commit local renders)
 *.png
 *.jpg
+# Exception: the repo's live chart updated by the bot
+!chart/latest.png
 
 # Environment / secrets — NEVER commit these
 .env

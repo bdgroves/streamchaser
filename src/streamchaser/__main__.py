@@ -32,31 +32,42 @@ POST_TWITTER = os.getenv("POST_TWITTER", "true").lower() == "true"
 POST_BLUESKY = os.getenv("POST_BLUESKY", "true").lower() == "true"
 
 # ── Notable event detection ───────────────────────────────────────────────────
+# Thresholds scale relative to each gauge's historical mean so the same
+# logic works for a 30 cfs creek and a 800 cfs river.
 
-DRY_THRESHOLD   = 1.0   # cfs
-RISING_FAST_CFS = 2.0   # cfs/hr
-PEAK_WINDOW_HRS = 2.0   # hours
+DRY_THRESHOLD_ABS = 1.0    # cfs — absolute floor, any gauge below this is dry
+RISING_FAST_PCT   = 0.10   # rate of change > 10% of historical mean per hour = storm pulse
+PEAK_WINDOW_HRS   = 2.0    # consider peak "just set" if within this many hours
 
 def check_notable(report) -> tuple[bool, str]:
     now = datetime.now(timezone.utc)
     s   = report.stats
 
-    if report.rate_of_change >= RISING_FAST_CFS:
+    # Scale rising-fast threshold to the gauge's mean (min 2 cfs, max 50 cfs)
+    mean = s.mean if s.mean else 30.0
+    rising_threshold = max(2.0, min(50.0, mean * RISING_FAST_PCT))
+
+    # 1. Rising fast — storm pulse
+    if report.rate_of_change >= rising_threshold:
         return True, f"RISING FAST  +{report.rate_of_change:.1f} cfs/hr"
 
+    # 2. New 7-day peak set recently
     if report.peak_7d_time:
         hrs = (now - report.peak_7d_time.astimezone(timezone.utc)).total_seconds() / 3600
         if hrs <= PEAK_WINDOW_HRS:
             return True, f"NEW 7-DAY PEAK  {report.peak_7d:.1f} cfs"
 
+    # 3. Above p75 — above normal flow
     if s.p75 and report.current > s.p75:
         return True, f"ABOVE NORMAL  {report.current:.1f} cfs > p75 {s.p75:.1f}"
 
-    if report.current < DRY_THRESHOLD:
+    # 4. Going dry
+    if report.current < DRY_THRESHOLD_ABS:
         return True, f"GOING DRY  {report.current:.2f} cfs"
 
+    # 5. Flow returning after near-dry
     prior_approx = report.current - report.delta_24h
-    if report.current >= DRY_THRESHOLD and prior_approx < DRY_THRESHOLD and report.delta_24h > 0:
+    if report.current >= DRY_THRESHOLD_ABS and prior_approx < DRY_THRESHOLD_ABS and report.delta_24h > 0:
         return True, f"FLOW RETURNING  {report.current:.2f} cfs after near-dry"
 
     return False, "no notable change"

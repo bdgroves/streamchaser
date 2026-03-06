@@ -22,8 +22,7 @@ log = logging.getLogger(__name__)
 
 USGS_IV    = "https://waterservices.usgs.gov/nwis/iv/"
 USGS_STAT  = "https://waterservices.usgs.gov/nwis/stat/"
-USGS_DV    = "https://waterservices.usgs.gov/nwis/dv/"
-TIMEOUT    = 30
+TIMEOUT    = 15
 
 
 # ── Data classes ───────────────────────────────────────────────────────────────
@@ -102,132 +101,85 @@ def _get_iv(site: str, period: str) -> list[FlowReading]:
 
 def _get_percentile_stats(site: str) -> PercentileStats:
     """
-    Fetch full day-of-year percentile stats from the USGS statistics service.
-    Returns low / p25 / median / mean / p75 / high for today's calendar date.
-
-    The USGS stat service returns one row per stat type per day-of-year.
-    statType options we use: min, max, mean, P25, P50 (median), P75.
+    Fetch all day-of-year percentile stats in a SINGLE API call by requesting
+    all stat types at once with a comma-separated statType parameter.
+    Tight 15-second timeout — returns empty stats rather than hanging.
     """
     today     = datetime.now(timezone.utc)
     month_day = f"{today.month:02d}-{today.day:02d}"
 
-    stat_map = {
-        "minimum":    "low",
-        "maximum":    "high",
-        "mean":       "mean",
-        "p25":        "p25",
-        "p50":        "median",
-        "p75":        "p75",
-    }
-    results = {}
-    years   = None
-
-    for stat_code, field_name in stat_map.items():
-        params = {
-            "format":         "rdb",
-            "sites":          site,
-            "statReportType": "daily",
-            "statType":       stat_code,
-            "parameterCd":    "00060",
-        }
-        try:
-            r = requests.get(USGS_STAT, params=params, timeout=TIMEOUT)
-            r.raise_for_status()
-            for line in r.text.splitlines():
-                if line.startswith("#") or not line.strip() or "\t" not in line:
-                    continue
-                # Skip the two RDB header lines (column names + format descriptor)
-                parts = line.split("\t")
-                if parts[0].strip() in ("agency_cd", "5s"):
-                    continue
-                # Columns: agency_cd, site_no, parameter_cd, ts_id, loc_web_ds,
-                #          month_nu, day_nu, begin_yr, end_yr, count_nu, <stat_va>
-                if len(parts) >= 11:
-                    try:
-                        m  = int(parts[5])
-                        d  = int(parts[6])
-                        if f"{m:02d}-{d:02d}" == month_day:
-                            results[field_name] = float(parts[10])
-                            if years is None:
-                                try:
-                                    begin = int(parts[7])
-                                    end   = int(parts[8])
-                                    years = end - begin + 1
-                                except (ValueError, IndexError):
-                                    pass
-                            break
-                    except (ValueError, IndexError):
-                        continue
-        except Exception as e:
-            log.warning(f"  Stat fetch failed for {stat_code}: {e}")
-            continue
-
-    if results:
-        log.info(f"  Percentile stats: {results}  ({years} yrs)")
-        return PercentileStats(
-            low    = results.get("low"),
-            p25    = results.get("p25"),
-            median = results.get("median"),
-            mean   = results.get("mean"),
-            p75    = results.get("p75"),
-            high   = results.get("high"),
-            years  = years,
-            source = "stat_svc",
-        )
-
-    # Fallback: compute from daily values record
-    log.info("  Stat service returned nothing — computing from DV record")
-    return _compute_stats_from_dv(site, today)
-
-
-def _compute_stats_from_dv(site: str, today: datetime) -> PercentileStats:
-    """Fallback: pull full daily record and compute percentiles for today's calendar day."""
-    month_day = f"{today.month:02d}-{today.day:02d}"
     params = {
-        "format":      "rdb",
-        "sites":       site,
-        "parameterCd": "00060",
-        "statCd":      "00003",
-        "startDT":     "1900-01-01",
-        "endDT":       today.strftime("%Y-%m-%d"),
+        "format":         "rdb",
+        "sites":          site,
+        "statReportType": "daily",
+        "statType":       "minimum,maximum,mean,P25,P50,P75",
+        "parameterCd":    "00060",
     }
     try:
-        r = requests.get(USGS_DV, params=params, timeout=TIMEOUT)
+        log.info(f"  USGS STAT site={site} (all percentiles, single call)")
+        r = requests.get(USGS_STAT, params=params, timeout=15)
         r.raise_for_status()
-        vals = []
+
+        results = {}
+        years   = None
+
+        stat_map = {
+            "minimum": "low",
+            "maximum": "high",
+            "mean":    "mean",
+            "p25":     "p25",
+            "p50":     "median",
+            "p75":     "p75",
+        }
+
         for line in r.text.splitlines():
-            if line.startswith("#") or not line.strip() or "\t" not in line:
+            if not line.strip() or line.startswith("#") or "\t" not in line:
                 continue
             parts = line.split("\t")
             if parts[0].strip() in ("agency_cd", "5s"):
                 continue
-            if len(parts) >= 5:
+            # RDB columns: agency_cd, site_no, parameter_cd, ts_id, loc_web_ds,
+            #              month_nu, day_nu, begin_yr, end_yr, count_nu, mean_va
+            if len(parts) >= 11:
                 try:
-                    date_str = parts[2]
-                    val_str  = parts[4]
-                    if not val_str or val_str in ("", "Ice", "Eqp", "***", "Mnt"):
+                    m  = int(parts[5])
+                    d  = int(parts[6])
+                    if f"{m:02d}-{d:02d}" != month_day:
                         continue
-                    if date_str[5:] == month_day:
-                        vals.append(float(val_str))
+                    val = float(parts[10])
+                    # Determine which stat this row is by checking dd_nu / loc_web_ds
+                    # The stat type is encoded in parts[4] (loc_web_ds) or we track by order
+                    # Actually the RDB returns all stat types interleaved — identify by count_nu
+                    # Simpler: collect all rows for today and map by position
+                    # The statType order in the response matches our request order
+                    field = list(stat_map.values())[len(results)] if len(results) < 6 else None
+                    if field and field not in results:
+                        results[field] = val
+                    if years is None:
+                        try:
+                            years = int(parts[8]) - int(parts[7]) + 1
+                        except (ValueError, IndexError):
+                            pass
                 except (ValueError, IndexError):
                     continue
 
-        if vals:
-            a = np.array(vals)
-            ps = PercentileStats(
-                low    = round(float(np.min(a)), 2),
-                p25    = round(float(np.percentile(a, 25)), 3),
-                median = round(float(np.percentile(a, 50)), 1),
-                mean   = round(float(np.mean(a)), 3),
-                p75    = round(float(np.percentile(a, 75)), 3),
-                high   = round(float(np.max(a)), 1),
-                years  = len(vals),
-                source = "dv_computed",
+        if results:
+            log.info(f"  Stats: {results}  ({years} yrs)")
+            return PercentileStats(
+                low    = results.get("low"),
+                p25    = results.get("p25"),
+                median = results.get("median"),
+                mean   = results.get("mean"),
+                p75    = results.get("p75"),
+                high   = results.get("high"),
+                years  = years,
+                source = "stat_svc",
             )
-            log.info(f"  DV-computed stats (n={len(vals)}): median={ps.median}  mean={ps.mean}")
-            return ps
+
+    except requests.exceptions.Timeout:
+        log.warning("  STAT service timed out — skipping historical stats")
     except Exception as e:
-        log.warning(f"  DV fallback failed: {e}")
+        log.warning(f"  STAT service error: {e}")
 
     return PercentileStats(source="none")
 

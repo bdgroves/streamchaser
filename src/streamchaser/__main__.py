@@ -40,9 +40,6 @@ RISING_FAST_PCT   = 0.10   # rate of change > 10% of historical mean per hour = 
 PEAK_WINDOW_HRS   = 2.0    # consider peak "just set" if within this many hours
 
 def check_notable(report) -> tuple[bool, str]:
-    # Allow forcing a post for testing via env var
-    if os.getenv("FORCE_POST", "").lower() == "true":
-        return True, "TEST POST"
 
     now = datetime.now(timezone.utc)
     s   = report.stats

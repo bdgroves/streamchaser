@@ -112,7 +112,7 @@ def send_sms(text: str, reason: str, report) -> None:
     msg = MIMEText(body)
     msg["From"]    = gmail_user
     msg["To"]      = sms_address
-    msg["Subject"] = ""
+    msg["Subject"] = f"streamchaser {report.station_id}"
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
         server.login(gmail_user, gmail_password)

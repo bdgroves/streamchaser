@@ -43,7 +43,7 @@ def compose_post(report) -> str:
     d1h    = f"{report.delta_1h:+.1f}"
     d24h   = f"{report.delta_24h:+.1f}"
     ly     = f"{report.last_year}" if report.last_year else "N/A"
-    pct    = f"{report.pct_of_historical:.0f}%" if report.pct_of_historical else "N/A"
+    pct    = f"{report.pct_of_mean:.0f}%" if report.pct_of_mean else "N/A"
     roc    = _roc_label(report.rate_of_change)
     peak_t = report.peak_7d_time.strftime("%-m/%-d %H:%Mz") if report.peak_7d_time else "N/A"
 

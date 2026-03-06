@@ -65,7 +65,7 @@ def post_to_bluesky(text: str, image_path: str, report) -> None:
     client.login(handle, password)
 
     with open(image_path, "rb") as f:
-        blob_resp = client.com.atproto.repo.upload_blob(f.read(), "image/png")
+        blob_resp = client.upload_blob(f.read())
     blob = blob_resp.blob
 
     alt = (
@@ -88,7 +88,7 @@ def post_to_bluesky(text: str, image_path: str, report) -> None:
             "createdAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         },
     )
-    log.info("Bluesky post published")
+    log.info("✓  Bluesky posted")
 
 
 def _facets(text: str) -> list:

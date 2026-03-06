@@ -91,7 +91,57 @@ def post_to_bluesky(text: str, image_path: str, report) -> None:
     log.info("✓  Bluesky posted")
 
 
-def _facets(text: str) -> list:
+# ── SMS via Twilio ─────────────────────────────────────────────────────────────
+
+def send_sms(text: str, reason: str, report) -> None:
+    """
+    Send an SMS alert via Twilio.
+
+    Required secrets (env vars):
+        TWILIO_ACCOUNT_SID
+        TWILIO_AUTH_TOKEN
+        TWILIO_FROM          your Twilio number e.g. +18664765090
+        TWILIO_TO            your cell number e.g. +12067190742
+    """
+    import urllib.request
+    import urllib.parse
+    import base64
+
+    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
+    auth_token  = os.environ["TWILIO_AUTH_TOKEN"]
+    from_number = os.environ["TWILIO_FROM"]
+    to_number   = os.environ["TWILIO_TO"]
+
+    # Compact SMS — just the essentials, no hashtags or URL noise
+    arrow = "↑" if report.delta_1h > 0.05 else ("↓" if report.delta_1h < -0.05 else "→")
+    sms = (
+        f"⚡ {reason}\n"
+        f"{report.station_name}\n"
+        f"{report.current} cfs {arrow}  Δ1h {report.delta_1h:+.1f}\n"
+        f"7d peak {report.peak_7d:.1f} cfs\n"
+        f"waterdata.usgs.gov/monitoring-location/{report.station_id}/"
+    )
+
+    url  = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+    data = urllib.parse.urlencode({
+        "From": from_number,
+        "To":   to_number,
+        "Body": sms,
+    }).encode()
+
+    credentials = base64.b64encode(f"{account_sid}:{auth_token}".encode()).decode()
+    req = urllib.request.Request(url, data=data, headers={
+        "Authorization": f"Basic {credentials}",
+        "Content-Type":  "application/x-www-form-urlencoded",
+    })
+
+    with urllib.request.urlopen(req) as resp:
+        if resp.status == 201:
+            log.info(f"✓  SMS sent to {to_number}")
+        else:
+            log.warning(f"  SMS unexpected status {resp.status}")
+
+
     """Build AT Protocol facets for URLs and #hashtags."""
     facets = []
 

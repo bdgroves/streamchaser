@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from .gauge  import build_report
 from .chart  import generate_chart
-from .poster import post_to_twitter, post_to_bluesky
+from .poster import post_to_twitter, post_to_bluesky, send_sms
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -163,6 +163,12 @@ def run_station(station_id: str, station_name: str, hashtags: str) -> bool:
             log.info("✓  Bluesky posted")
         except Exception as e:
             log.error(f"✗  Bluesky failed: {e}")
+
+    if os.getenv("TWILIO_ACCOUNT_SID"):
+        try:
+            send_sms(text, reason, report)
+        except Exception as e:
+            log.error(f"✗  SMS failed: {e}")
 
     return True
 

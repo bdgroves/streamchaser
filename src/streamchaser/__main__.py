@@ -71,7 +71,7 @@ def main():
     log.info(f"  Δ 1h / 24h     : {report.delta_1h:+.2f} / {report.delta_24h:+.2f} cfs")
     log.info(f"  7-day peak     : {report.peak_7d} cfs @ {report.peak_7d_time}")
     log.info(f"  Rate of change : {report.rate_of_change:+.3f} cfs/hr")
-    log.info(f"  % of hist avg  : {report.pct_of_historical}")
+    log.info(f"  % of mean      : {report.pct_of_mean}")
 
     chart_path = generate_chart(report, station_url=STATION_URL)
     log.info(f"  Chart          : {chart_path}")

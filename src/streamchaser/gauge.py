@@ -101,86 +101,74 @@ def _get_iv(site: str, period: str) -> list[FlowReading]:
 
 def _get_percentile_stats(site: str) -> PercentileStats:
     """
-    Fetch all day-of-year percentile stats in a SINGLE API call by requesting
-    all stat types at once with a comma-separated statType parameter.
-    Tight 15-second timeout — returns empty stats rather than hanging.
+    Fetch day-of-year percentile stats from the USGS statistics service.
+    Makes one call per stat type with a tight 10s timeout each.
+    Falls back to empty stats rather than hanging.
     """
     today     = datetime.now(timezone.utc)
     month_day = f"{today.month:02d}-{today.day:02d}"
 
-    params = {
-        "format":         "rdb",
-        "sites":          site,
-        "statReportType": "daily",
-        "statType":       "minimum,maximum,mean,P25,P50,P75",
-        "parameterCd":    "00060",
+    stat_map = {
+        "minimum": "low",
+        "maximum": "high",
+        "mean":    "mean",
+        "P25":     "p25",
+        "P50":     "median",
+        "P75":     "p75",
     }
-    try:
-        log.info(f"  USGS STAT site={site} (all percentiles, single call)")
-        r = requests.get(USGS_STAT, params=params, timeout=15)
-        r.raise_for_status()
+    results = {}
+    years   = None
 
-        results = {}
-        years   = None
-
-        stat_map = {
-            "minimum": "low",
-            "maximum": "high",
-            "mean":    "mean",
-            "p25":     "p25",
-            "p50":     "median",
-            "p75":     "p75",
+    for stat_code, field_name in stat_map.items():
+        params = {
+            "format":         "rdb",
+            "sites":          site,
+            "statReportType": "daily",
+            "statType":       stat_code,
+            "parameterCd":    "00060",
         }
-
-        for line in r.text.splitlines():
-            if not line.strip() or line.startswith("#") or "\t" not in line:
-                continue
-            parts = line.split("\t")
-            if parts[0].strip() in ("agency_cd", "5s"):
-                continue
-            # RDB columns: agency_cd, site_no, parameter_cd, ts_id, loc_web_ds,
-            #              month_nu, day_nu, begin_yr, end_yr, count_nu, mean_va
-            if len(parts) >= 11:
-                try:
-                    m  = int(parts[5])
-                    d  = int(parts[6])
-                    if f"{m:02d}-{d:02d}" != month_day:
-                        continue
-                    val = float(parts[10])
-                    # Determine which stat this row is by checking dd_nu / loc_web_ds
-                    # The stat type is encoded in parts[4] (loc_web_ds) or we track by order
-                    # Actually the RDB returns all stat types interleaved — identify by count_nu
-                    # Simpler: collect all rows for today and map by position
-                    # The statType order in the response matches our request order
-                    field = list(stat_map.values())[len(results)] if len(results) < 6 else None
-                    if field and field not in results:
-                        results[field] = val
-                    if years is None:
-                        try:
-                            years = int(parts[8]) - int(parts[7]) + 1
-                        except (ValueError, IndexError):
-                            pass
-                except (ValueError, IndexError):
+        try:
+            r = requests.get(USGS_STAT, params=params, timeout=10)
+            r.raise_for_status()
+            for line in r.text.splitlines():
+                if not line.strip() or line.startswith("#") or "\t" not in line:
                     continue
+                parts = line.split("\t")
+                if parts[0].strip() in ("agency_cd", "5s"):
+                    continue
+                if len(parts) >= 11:
+                    try:
+                        m = int(parts[5])
+                        d = int(parts[6])
+                        if f"{m:02d}-{d:02d}" == month_day:
+                            results[field_name] = float(parts[10])
+                            if years is None:
+                                try:
+                                    years = int(parts[8]) - int(parts[7]) + 1
+                                except (ValueError, IndexError):
+                                    pass
+                            break
+                    except (ValueError, IndexError):
+                        continue
+        except requests.exceptions.Timeout:
+            log.warning(f"  STAT {stat_code} timed out — skipping")
+        except Exception as e:
+            log.warning(f"  STAT {stat_code} error: {e}")
 
-        if results:
-            log.info(f"  Stats: {results}  ({years} yrs)")
-            return PercentileStats(
-                low    = results.get("low"),
-                p25    = results.get("p25"),
-                median = results.get("median"),
-                mean   = results.get("mean"),
-                p75    = results.get("p75"),
-                high   = results.get("high"),
-                years  = years,
-                source = "stat_svc",
-            )
+    if results:
+        log.info(f"  Stats ({years} yrs): {results}")
+        return PercentileStats(
+            low    = results.get("low"),
+            p25    = results.get("p25"),
+            median = results.get("median"),
+            mean   = results.get("mean"),
+            p75    = results.get("p75"),
+            high   = results.get("high"),
+            years  = years,
+            source = "stat_svc",
+        )
 
-    except requests.exceptions.Timeout:
-        log.warning("  STAT service timed out — skipping historical stats")
-    except Exception as e:
-        log.warning(f"  STAT service error: {e}")
-
+    log.warning("  No stats available for this site/date")
     return PercentileStats(source="none")
 
 

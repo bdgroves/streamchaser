@@ -42,10 +42,9 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           BLUESKY_HANDLE:        ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
-          TWILIO_ACCOUNT_SID:    ${{ secrets.TWILIO_ACCOUNT_SID }}
-          TWILIO_AUTH_TOKEN:     ${{ secrets.TWILIO_AUTH_TOKEN }}
-          TWILIO_FROM:           ${{ secrets.TWILIO_FROM }}
-          TWILIO_TO:             ${{ secrets.TWILIO_TO }}
+          GMAIL_USER:            ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD:    ${{ secrets.GMAIL_APP_PASSWORD }}
+          SMS_ADDRESS:           ${{ secrets.SMS_ADDRESS }}
         run: python -m streamchaser
 
       - name: Update charts in repo

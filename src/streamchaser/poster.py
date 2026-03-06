@@ -34,6 +34,11 @@ def post_to_twitter(text: str, image_path: str) -> None:
 
 def post_to_bluesky(text: str, image_path: str, report) -> None:
     from atproto import Client
+
+    # Bluesky hard limit: 300 graphemes
+    if len(text) > 300:
+        text = text[:297] + "..."
+
     handle   = os.environ["BLUESKY_HANDLE"]
     password = os.environ["BLUESKY_APP_PASSWORD"]
     client   = Client()
@@ -46,7 +51,7 @@ def post_to_bluesky(text: str, image_path: str, report) -> None:
     alt = (
         f"Stream flow chart for {report.station_name} (USGS {report.station_id}). "
         f"Current: {report.current} cfs. "
-        f"7-day range: {report.range_7d_lo}–{report.range_7d_hi} cfs. "
+        f"7-day range: {report.range_7d_lo}-{report.range_7d_hi} cfs. "
         f"Peak: {report.peak_7d} cfs."
     )
     client.app.bsky.feed.post.create(
@@ -85,36 +90,32 @@ def _facets(text: str) -> list:
     return facets
 
 
-# ── SMS via Twilio ─────────────────────────────────────────────────────────────
+# ── SMS via email-to-SMS gateway (Verizon) ─────────────────────────────────────
 
 def send_sms(text: str, reason: str, report) -> None:
-    import urllib.request
-    import urllib.parse
-    import base64
+    import smtplib
+    from email.mime.text import MIMEText
 
-    account_sid = os.environ["TWILIO_ACCOUNT_SID"]
-    auth_token  = os.environ["TWILIO_AUTH_TOKEN"]
-    from_number = os.environ["TWILIO_FROM"]
-    to_number   = os.environ["TWILIO_TO"]
+    gmail_user     = os.environ["GMAIL_USER"]
+    gmail_password = os.environ["GMAIL_APP_PASSWORD"]
+    sms_address    = os.environ["SMS_ADDRESS"]   # e.g. 2067190742@vtext.com
 
     arrow = "↑" if report.delta_1h > 0.05 else ("↓" if report.delta_1h < -0.05 else "→")
-    sms = (
-        f"⚡ {reason}\n"
+    body = (
+        f"{reason}\n"
         f"{report.station_name}\n"
-        f"{report.current} cfs {arrow}  Δ1h {report.delta_1h:+.1f}\n"
-        f"7d peak {report.peak_7d:.1f} cfs\n"
-        f"waterdata.usgs.gov/monitoring-location/{report.station_id}/"
+        f"{report.current} cfs {arrow} {report.delta_1h:+.1f}/hr\n"
+        f"peak {report.peak_7d:.0f} cfs\n"
+        f"usgs.gov/{report.station_id}"
     )
 
-    url  = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-    data = urllib.parse.urlencode({"From": from_number, "To": to_number, "Body": sms}).encode()
-    creds = base64.b64encode(f"{account_sid}:{auth_token}".encode()).decode()
-    req  = urllib.request.Request(url, data=data, headers={
-        "Authorization": f"Basic {creds}",
-        "Content-Type":  "application/x-www-form-urlencoded",
-    })
-    with urllib.request.urlopen(req) as resp:
-        if resp.status == 201:
-            log.info(f"✓  SMS sent to {to_number}")
-        else:
-            log.warning(f"  SMS unexpected status {resp.status}")
+    msg = MIMEText(body)
+    msg["From"]    = gmail_user
+    msg["To"]      = sms_address
+    msg["Subject"] = ""
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(gmail_user, gmail_password)
+        server.sendmail(gmail_user, sms_address, msg.as_string())
+
+    log.info(f"✓  SMS sent to {sms_address}")

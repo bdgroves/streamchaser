@@ -168,7 +168,7 @@ def run_station(station_id: str, station_name: str, hashtags: str) -> bool:
         except Exception as e:
             log.error(f"✗  Bluesky failed: {e}")
 
-    if os.getenv("TWILIO_ACCOUNT_SID"):
+    if os.getenv("GMAIL_USER"):
         try:
             send_sms(text, reason, report)
         except Exception as e:

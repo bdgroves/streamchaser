@@ -298,20 +298,15 @@ def _header(fig, ax, report):
     ax.set_xlim(0, 1); ax.set_ylim(0, 1)
     tc = _tc(report.delta_1h)
 
-    # Water drop icon — drawn in figure-inch space for true proportions
-    _draw_waterdrop(fig, ax, cx_frac=0.030, cy_frac=0.42, r_inch=0.21, color=P["water"])
-
-    # Station name — nudged right to clear the drop
-    ax.text(0.072, 0.74, report.station_name.upper(),
+    # Station name — flush left, no badge
+    ax.text(0.0, 0.74, report.station_name.upper(),
             ha="left", va="center", transform=ax.transAxes,
             fontsize=15, fontweight="bold", color=P["ink"], zorder=4)
 
-    # Subtitle
-    ax.text(0.072, 0.24, "USGS Monitoring Station  ·  Real-Time Streamflow",
+    ax.text(0.0, 0.24, "USGS Monitoring Station  ·  Real-Time Streamflow",
             ha="left", va="center", transform=ax.transAxes,
             fontsize=7.5, color=P["usgs_blue"], zorder=4)
 
-    # Right: current reading
     ax.text(0.980, 0.74, f"{report.current:.2f}",
             ha="right", va="center", transform=ax.transAxes,
             fontsize=23, fontweight="bold", color=tc, zorder=4)

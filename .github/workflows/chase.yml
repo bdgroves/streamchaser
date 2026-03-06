@@ -9,7 +9,7 @@ jobs:
   chase:
     name: Fetch - Chart - Post
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     permissions:
       contents: write
 
@@ -44,21 +44,28 @@ jobs:
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: python -m streamchaser
 
-      - name: Update chart in repo
-        if: success()
+      - name: Update charts in repo
+        if: always()
         run: |
           mkdir -p chart
-          cp /tmp/streamchaser_*.png chart/latest.png
+          # Big Creek
+          [ -f /tmp/latest_11284400.png ] && cp /tmp/latest_11284400.png chart/big_creek.png
+          # Tuolumne BL Early Intake
+          [ -f /tmp/latest_11276900.png ] && cp /tmp/latest_11276900.png chart/tuolumne_early_intake.png
+          # Cherry Creek
+          [ -f /tmp/latest_11278300.png ] && cp /tmp/latest_11278300.png chart/cherry_creek.png
+          # latest.png = Big Creek for README
+          [ -f /tmp/latest_11284400.png ] && cp /tmp/latest_11284400.png chart/latest.png
           git config user.name  "streamchaser-bot"
           git config user.email "bot@streamchaser"
-          git add chart/latest.png
-          git diff --staged --quiet || git commit -m "chore: update chart [skip ci]"
+          git add chart/
+          git diff --staged --quiet || git commit -m "chore: update charts [skip ci]"
           git push
 
-      - name: Save chart artifact
+      - name: Save chart artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: chart-${{ github.run_number }}
+          name: charts-${{ github.run_number }}
           path: /tmp/streamchaser_*.png
           retention-days: 5

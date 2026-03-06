@@ -15,8 +15,8 @@ build/
 # Generated chart images (ephemeral — don't commit local renders)
 *.png
 *.jpg
-# Exception: the repo's live chart updated by the bot
-!chart/latest.png
+# Exception: the repo's live charts updated by the bot
+!chart/*.png
 
 # Environment / secrets — NEVER commit these
 .env

@@ -1,4 +1,4 @@
-﻿name: Streamchaser
+name: Streamchaser
 
 on:
   schedule:
@@ -10,6 +10,8 @@ jobs:
     name: Fetch - Chart - Post
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    permissions:
+      contents: write
 
     env:
       USGS_STATION_ID:   "11284400"
@@ -42,7 +44,18 @@ jobs:
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: python -m streamchaser
 
-      - name: Save chart image
+      - name: Update chart in repo
+        if: success()
+        run: |
+          mkdir -p chart
+          cp /tmp/streamchaser_*.png chart/latest.png
+          git config user.name  "streamchaser-bot"
+          git config user.email "bot@streamchaser"
+          git add chart/latest.png
+          git diff --staged --quiet || git commit -m "chore: update chart [skip ci]"
+          git push
+
+      - name: Save chart artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:

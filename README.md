@@ -2,22 +2,40 @@
 
 > *You don't chase the water. You read it.*
 
-A GitHub Actions bot that monitors a USGS stream gauge and posts a daily field report — chart and stats — to Twitter/X and Bluesky. Automated. Unattended. Running whether you're watching or not.
+Big Creek runs through the hills above Groveland, California — my hometown. It drains the western slope of the Sierra Nevada, feeds Don Pedro Reservoir, and in a wet year it moves. In a dry year it barely whispers. After a storm rolls through, it can go from 6 cfs to 300 cfs in a matter of hours.
+
+This bot watches it so I don't have to.
 
 ---
 
-## What it does
+## Latest reading
 
-Every 6 hours (configurable), it pulls real-time streamflow data from the USGS National Water Information System, generates a chart, and posts to social media.
+![Latest chart](chart/latest.png)
 
-**Each post includes:**
+*Updated every 6 hours by GitHub Actions. [Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11284400/)*
 
-- Current discharge in cfs with trend direction
-- Δ 1-hour and 24-hour change
-- 7-day flow record with annotated peak
-- Rate of change — accelerating, holding, decelerating
-- Flow vs. historical average for this date
-- Last-year reference
+---
+
+## Why this gauge
+
+**USGS 11284400 — Big C AB Whites Gulch NR Groveland CA**
+
+Big Creek is the kind of creek that doesn't make the news until it does. It's the creek that runs behind the properties off Ferretti Road, the one that crosses under the highway on the way into town, the one that tells you whether the hills are saturated or bone dry. When the Sierra gets hit by an atmospheric river, Big Creek is where you watch the pulse arrive first.
+
+The gauge has been running since 1969. Fifty-six years of record. Every storm, every drought, every fire year, every flood — it's all in there. The bot plots where today sits against all of it.
+
+Operated in cooperation with [Turlock Irrigation District](https://www.tid.org/), which manages Don Pedro downstream. They care about this number too.
+
+---
+
+## What the chart shows
+
+- **Current flow** in cubic feet per second, with trend direction
+- **7-day record** — the full hydrograph with annotated peak
+- **Percentile bands** — green band is the normal range (p25–p75) based on 56 years of same-date data
+- **Percentile needle** (right edge) — exactly where today's flow falls in the full historical distribution
+- **Rate of change** — accelerating, holding, or dropping off
+- **vs. long-term mean** — how this day compares to every same-date reading on record
 
 ---
 
@@ -25,36 +43,25 @@ Every 6 hours (configurable), it pulls real-time streamflow data from the USGS N
 
 ```
 streamchaser/
-├── .github/
-│   └── workflows/
-│       └── chase.yml               # scheduled action
-├── src/
-│   └── streamchaser/
-│       ├── __init__.py
-│       ├── __main__.py             # entry point
-│       ├── gauge.py                # USGS data fetching + stat computation
-│       ├── chart.py                # chart generation
-│       ├── chart_preview.py        # local visual test (no API calls)
-│       └── poster.py               # Twitter/X + Bluesky posting
-├── pixi.toml                       # environment + task runner
-├── pixi.lock                       # reproducible lockfile (commit this)
+├── .github/workflows/
+│   └── chase.yml               # runs every 6 hours
+├── chart/
+│   └── latest.png              # updated by the bot on every run
+├── src/streamchaser/
+│   ├── __main__.py             # orchestration + post text
+│   ├── gauge.py                # USGS API + stat computation
+│   ├── chart.py                # matplotlib chart generation
+│   ├── chart_preview.py        # local test render
+│   └── poster.py               # Twitter/X + Bluesky
 └── README.md
 ```
 
 ---
 
-## Setup
+## Setup for another gauge
 
-### 1. Fork and clone
-
-```bash
-git clone https://github.com/YOUR_USERNAME/streamchaser.git
-cd streamchaser
-```
-
-### 2. Configure your station
-
-Open `.github/workflows/chase.yml` and set these three env vars:
+1. Fork the repo
+2. Edit the three env vars in `chase.yml`:
 
 ```yaml
 env:
@@ -63,103 +70,41 @@ env:
   USGS_HASHTAGS:     "#USGS #BigCreek #Groveland"
 ```
 
-Find your station ID at [waterdata.usgs.gov](https://waterdata.usgs.gov/nwis/rt). Search by state, river, or location — look for a site with parameter `00060` (Discharge).
+3. Add 6 GitHub secrets (Settings → Secrets → Actions):
 
-### 3. Add GitHub Secrets
+| Secret | What |
+|---|---|
+| `TWITTER_API_KEY` | Consumer Key — developer.x.com |
+| `TWITTER_API_SECRET` | Consumer Secret |
+| `TWITTER_ACCESS_TOKEN` | Access Token (needs Read+Write) |
+| `TWITTER_ACCESS_SECRET` | Access Token Secret |
+| `BLUESKY_HANDLE` | e.g. `yourname.bsky.social` |
+| `BLUESKY_APP_PASSWORD` | bsky.app → Settings → App Passwords |
 
-**Settings → Secrets and variables → Actions → New repository secret**
-
-#### Twitter / X
-
-You need a free [developer account](https://developer.x.com) and an app with **Read + Write** permissions and **OAuth 1.0a** enabled.
-
-| Secret | What it is | Where |
-|---|---|---|
-| `TWITTER_API_KEY` | Consumer Key | developer.x.com → Your App → Keys & Tokens |
-| `TWITTER_API_SECRET` | Consumer Secret | same |
-| `TWITTER_ACCESS_TOKEN` | Account Access Token | same → *Access Token & Secret* |
-| `TWITTER_ACCESS_SECRET` | Account Access Token Secret | same |
-
-> **Note:** Access tokens are tied to *your account*. The app posts as you. Tokens generated under "Read only" permission won't work — regenerate them after switching to Read + Write.
-
-#### Bluesky
-
-No developer account needed. Just an App Password.
-
-| Secret | What it is | Where |
-|---|---|---|
-| `BLUESKY_HANDLE` | Your handle | e.g. `yourname.bsky.social` |
-| `BLUESKY_APP_PASSWORD` | App-specific password | bsky.app → Settings → Privacy & Security → App Passwords → Add App Password |
-
-> **Use an App Password, not your login password.** App Passwords are scoped and revocable.
-
-### 4. Set posting frequency
-
-Edit the cron in `chase.yml`:
-
-```yaml
-- cron: '0 */6 * * *'   # every 6 hours (default)
-# - cron: '0 * * * *'   # every hour
-# - cron: '0 15 * * *'  # once daily — 15:00 UTC / ~8am Pacific
-```
-
-### 5. Disable a platform
-
-```yaml
-POST_TWITTER: "false"
-POST_BLUESKY: "true"
-```
+4. Run workflow manually once to verify, then let the cron take over.
 
 ---
 
-## Local development
+## Adjust post frequency
 
-Install [Pixi](https://pixi.sh) first:
-
-```bash
-curl -fsSL https://pixi.sh/install.sh | bash
+```yaml
+- cron: '0 */6 * * *'    # every 6 hours (default)
+- cron: '0 15 * * *'     # once daily at 15:00 UTC
+- cron: '0 */3 * * *'    # every 3 hours during storm season
 ```
-
-Then:
-
-```bash
-# Install the environment (first time, or after pixi.toml changes)
-pixi install
-
-# Generate a chart from mock data — no API calls, no posting
-pixi run chart
-# → Chart saved to /tmp/streamchaser_11284400_YYYYMMDD_HHMM.png
-
-# Run the full bot (will post unless you disable platforms)
-export POST_TWITTER=false
-export POST_BLUESKY=false
-pixi run run
-```
-
-Pixi handles Python version, all dependencies, and task shortcuts in one lockfile. No virtualenv management needed.
-
----
-
-## Debugging a run
-
-Every GitHub Actions run uploads the generated chart as an artifact (kept 5 days).
-
-**Actions tab → click the run → Artifacts → chart-N**
-
-Download and inspect without needing to scroll your social feed.
 
 ---
 
 ## Data source
 
-All flow data is fetched from the **USGS Water Services API** — public, no API key required.
+USGS National Water Information System — public API, no key required.
 
 - Instantaneous values: `waterservices.usgs.gov/nwis/iv/`
 - Historical statistics: `waterservices.usgs.gov/nwis/stat/`
-- Parameter `00060` = Discharge (streamflow), cubic feet per second
+- Parameter `00060` = Discharge, cubic feet per second
 
 ---
 
 ## License
 
-MIT
+MIT. Watch your own creek.

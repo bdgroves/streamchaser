@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from .gauge  import build_report
 from .chart  import generate_chart
-from .poster import post_to_twitter, post_to_bluesky, send_sms
+from .poster import post_to_twitter, post_to_bluesky
 
 logging.basicConfig(
     level   = logging.INFO,
@@ -17,139 +17,114 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 
 # ── Stations ──────────────────────────────────────────────────────────────────
-# Each entry: (station_id, station_name, hashtags)
 STATIONS = [
     (
         os.getenv("USGS_STATION_ID",   "11284400"),
         os.getenv("USGS_STATION_NAME", "Big Creek @ Whites Gulch"),
         os.getenv("USGS_HASHTAGS",     "#USGS #BigCreek #Groveland"),
     ),
-    ("11276900", "Tuolumne R BL Early Intake", "#USGS #Tuolumne #Groveland"),
+    ("11276900", "Tuolumne R BL Early Intake",   "#USGS #Tuolumne #Groveland"),
     ("11278300", "Cherry Creek NR Early Intake", "#USGS #CherryCreek #Tuolumne"),
 ]
 
-POST_TWITTER = os.getenv("POST_TWITTER", "true").lower() == "true"
-POST_BLUESKY = os.getenv("POST_BLUESKY", "true").lower() == "true"
+POST_TWITTER = os.getenv("TWITTER_API_KEY") is not None
+POST_BLUESKY = os.getenv("BLUESKY_HANDLE")  is not None
 
-# ── Notable event detection ───────────────────────────────────────────────────
-# Thresholds scale relative to each gauge's historical mean so the same
-# logic works for a 30 cfs creek and a 800 cfs river.
 
-DRY_THRESHOLD_ABS = 1.0    # cfs — absolute floor, any gauge below this is dry
-RISING_FAST_PCT   = 0.10   # rate of change > 10% of historical mean per hour = storm pulse
-PEAK_WINDOW_HRS   = 2.0    # consider peak "just set" if within this many hours
+# ── Notability ────────────────────────────────────────────────────────────────
 
 def check_notable(report) -> tuple[bool, str]:
-
     now = datetime.now(timezone.utc)
     s   = report.stats
 
     # Scale rising-fast threshold to the gauge's mean (min 2 cfs, max 50 cfs)
-    mean = s.mean if s.mean else 30.0
-    rising_threshold = max(2.0, min(50.0, mean * RISING_FAST_PCT))
+    mean_flow     = s.mean if s.mean else 30.0
+    rising_thresh = max(2.0, min(50.0, mean_flow * 0.10))
 
-    # 1. Rising fast — storm pulse
-    if report.rate_of_change >= rising_threshold:
+    # 1. Rising fast
+    if report.rate_of_change >= rising_thresh:
         return True, f"RISING FAST  +{report.rate_of_change:.1f} cfs/hr"
 
-    # 2. New 7-day peak set recently
+    # 2. New 7-day peak set within the last 2 hours
     if report.peak_7d_time:
-        hrs = (now - report.peak_7d_time.astimezone(timezone.utc)).total_seconds() / 3600
-        if hrs <= PEAK_WINDOW_HRS:
+        age = (now - report.peak_7d_time.replace(tzinfo=timezone.utc)
+               if report.peak_7d_time.tzinfo is None
+               else now - report.peak_7d_time)
+        if abs(age.total_seconds()) < 7200:
             return True, f"NEW 7-DAY PEAK  {report.peak_7d:.1f} cfs"
 
-    # 3. Above p75 — above normal flow
+    # 3. Above normal (above p75)
     if s.p75 and report.current > s.p75:
         return True, f"ABOVE NORMAL  {report.current:.1f} cfs > p75 {s.p75:.1f}"
 
     # 4. Going dry
-    if report.current < DRY_THRESHOLD_ABS:
+    if report.current < 1.0:
         return True, f"GOING DRY  {report.current:.2f} cfs"
 
-    # 5. Flow returning after near-dry
-    prior_approx = report.current - report.delta_24h
-    if report.current >= DRY_THRESHOLD_ABS and prior_approx < DRY_THRESHOLD_ABS and report.delta_24h > 0:
-        return True, f"FLOW RETURNING  {report.current:.2f} cfs after near-dry"
+    # 5. Flow returning after dry spell
+    if report.delta_24h > 0 and (report.current - report.delta_24h) < 1.0:
+        return True, f"FLOW RETURNING  {report.current:.2f} cfs"
 
     return False, "no notable change"
 
 
-# ── Text composer ─────────────────────────────────────────────────────────────
-
-def _arrow(delta: float) -> str:
-    if delta >  0.05: return "↑"
-    if delta < -0.05: return "↓"
-    return "→"
-
-def _roc_label(roc: float) -> str:
-    if   roc >  2.0: return "rising fast ▲"
-    elif roc >  0.5: return "rising"
-    elif roc >  0.0: return "rising slowly"
-    elif roc < -2.0: return "dropping fast ▼"
-    elif roc < -0.5: return "falling"
-    else:            return "falling slowly"
-
-def compose_post(report, hashtags: str, reason: str) -> str:
-    arrow  = _arrow(report.delta_1h)
-    d1h    = f"{report.delta_1h:+.1f}"
-    d24h   = f"{report.delta_24h:+.1f}"
-    ly     = f"{report.last_year}" if report.last_year else "N/A"
-    pct    = f"{report.pct_of_mean:.0f}%" if report.pct_of_mean else "N/A"
-    roc    = _roc_label(report.rate_of_change)
-    peak_t = report.peak_7d_time.strftime("%-m/%-d %H:%Mz") if report.peak_7d_time else "N/A"
-    url    = f"https://waterdata.usgs.gov/monitoring-location/{report.station_id}/"
-
-    return (
-        f"⚡ {reason}\n"
-        f"{report.station_name} (USGS {report.station_id})\n"
-        f"Flow {report.current} cfs {arrow}  {roc}\n"
-        f"Δ 1h {d1h} · 24h {d24h} cfs\n"
-        f"7d peak {report.peak_7d:.1f} cfs @ {peak_t}\n"
-        f"7d range {report.range_7d_lo:.1f}–{report.range_7d_hi:.1f} cfs\n"
-        f"vs hist avg {pct}  ·  LY ≈ {ly} cfs\n"
-        f"{url}\n"
-        f"{hashtags}"
-    )
-
-
-# ── Per-station runner ────────────────────────────────────────────────────────
+# ── Per-station run ───────────────────────────────────────────────────────────
 
 def run_station(station_id: str, station_name: str, hashtags: str) -> bool:
-    """Process one station. Returns True if post was attempted."""
     log.info("─" * 56)
     log.info(f"  {station_name}  ({station_id})")
     log.info("─" * 56)
 
-    url = f"https://waterdata.usgs.gov/monitoring-location/{station_id}/"
+    station_url = f"https://waterdata.usgs.gov/monitoring-location/{station_id}/"
 
     try:
         report = build_report(station_id, station_name)
     except Exception as e:
-        log.error(f"  Failed to fetch {station_id}: {e}")
+        log.error(f"✗  Failed to build report: {e}")
         return False
 
-    log.info(f"  Current  : {report.current} cfs  {_arrow(report.delta_1h)}")
-    log.info(f"  Δ 1h/24h : {report.delta_1h:+.2f} / {report.delta_24h:+.2f} cfs")
-    log.info(f"  ROC      : {report.rate_of_change:+.3f} cfs/hr")
-    log.info(f"  Peak 7d  : {report.peak_7d} cfs @ {report.peak_7d_time}")
+    # Always generate chart (commits to repo every run)
+    try:
+        chart_path = generate_chart(report, station_url=station_url)
+        log.info(f"  Chart    : {chart_path}")
+    except Exception as e:
+        log.error(f"✗  Chart failed: {e}")
+        chart_path = None
 
-    should_post, reason = check_notable(report)
-    log.info(f"  Notable  : {should_post}  —  {reason}")
+    notable, reason = check_notable(report)
+    log.info(f"  Notable  : {notable}  —  {reason}")
 
-    # Always render chart and save to chart/gauge_STATIONID.png
-    chart_path = generate_chart(report, station_url=url)
-    log.info(f"  Chart    : {chart_path}")
-
-    # Copy to per-gauge path for README / repo
-    chart_dest = f"/tmp/latest_{station_id}.png"
-    import shutil
-    shutil.copy(chart_path, chart_dest)
-
-    if not should_post:
+    if not notable:
         return False
 
-    text = compose_post(report, hashtags, reason)
+    # Build post text
+    arrow = "↑" if report.delta_1h > 0.05 else ("↓" if report.delta_1h < -0.05 else "→")
+    roc_w = "rising fast ▲" if report.rate_of_change > 0.5 else \
+            ("falling ▼"   if report.rate_of_change < -0.5 else \
+            ("rising"      if report.rate_of_change > 0.05 else \
+            ("falling"     if report.rate_of_change < -0.05 else "steady")))
+    peak_str = (report.peak_7d_time.strftime("%-m/%-d %H:%Mz")
+                if report.peak_7d_time else "—")
+    ly_str   = f"{report.last_year:.2f}" if report.last_year else "N/A"
+    pct_str  = f"{report.pct_of_mean:.0f}%" if report.pct_of_mean else "N/A"
+
+    text = (
+        f"⚡ {reason}\n"
+        f"{station_name} (USGS {station_id})\n"
+        f"Flow {report.current:.1f} cfs {arrow}  {roc_w}\n"
+        f"Δ 1h {report.delta_1h:+.1f} · 24h {report.delta_24h:+.1f} cfs\n"
+        f"7d peak {report.peak_7d:.1f} cfs @ {peak_str}\n"
+        f"7d range {report.range_7d_lo:.1f}–{report.range_7d_hi:.1f} cfs\n"
+        f"vs hist avg {pct_str}  ·  LY ≈ {ly_str} cfs\n"
+        f"{station_url}\n"
+        f"{hashtags}"
+    )
+
     log.info(f"\nPost text:\n{text}\n")
+
+    if not chart_path:
+        log.warning("  No chart — skipping social posts")
+        return False
 
     if POST_TWITTER:
         try:
@@ -164,12 +139,6 @@ def run_station(station_id: str, station_name: str, hashtags: str) -> bool:
             log.info("✓  Bluesky posted")
         except Exception as e:
             log.error(f"✗  Bluesky failed: {e}")
-
-    if os.getenv("GMAIL_USER"):
-        try:
-            send_sms(text, reason, report)
-        except Exception as e:
-            log.error(f"✗  SMS failed: {e}")
 
     return True
 

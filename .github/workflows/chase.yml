@@ -9,18 +9,13 @@ jobs:
   chase:
     name: Fetch - Chart - Post
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: write
 
     env:
-      USGS_STATION_ID:   "11284400"
-      USGS_STATION_NAME: "Big Creek @ Whites Gulch"
-      USGS_HASHTAGS:     "#USGS #BigCreek #Groveland"
-      POST_TWITTER:      "true"
-      POST_BLUESKY:      "true"
-      CHART_OUTPUT_DIR:  "/tmp"
-      PYTHONPATH:        "src"
+      CHART_OUTPUT_DIR: "/tmp"
+      PYTHONPATH:       "src"
 
     steps:
       - name: Checkout
@@ -42,23 +37,42 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           BLUESKY_HANDLE:        ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
-          GMAIL_USER:            ${{ secrets.GMAIL_USER }}
-          GMAIL_APP_PASSWORD:    ${{ secrets.GMAIL_APP_PASSWORD }}
-          SMS_ADDRESS:           ${{ secrets.SMS_ADDRESS }}
         run: python -m streamchaser
 
       - name: Update charts in repo
         if: always()
         run: |
           mkdir -p chart
-          # Big Creek
-          [ -f /tmp/latest_11284400.png ] && cp /tmp/latest_11284400.png chart/big_creek.png
-          # Tuolumne BL Early Intake
-          [ -f /tmp/latest_11276900.png ] && cp /tmp/latest_11276900.png chart/tuolumne_early_intake.png
-          # Cherry Creek
-          [ -f /tmp/latest_11278300.png ] && cp /tmp/latest_11278300.png chart/cherry_creek.png
-          # latest.png = Big Creek for README
-          [ -f /tmp/latest_11284400.png ] && cp /tmp/latest_11284400.png chart/latest.png
+
+          # Copy latest chart for each station by picking the newest matching file
+          copy_latest() {
+            local sid=$1
+            local dest=$2
+            local f=$(ls -t /tmp/streamchaser_${sid}_*.png 2>/dev/null | head -1)
+            [ -n "$f" ] && cp "$f" "chart/${dest}.png"
+          }
+
+          # Tuolumne chain
+          copy_latest 11276500 hetch_hetchy
+          copy_latest 11274790 tuolumne_grand_canyon
+          copy_latest 11276900 tuolumne_early_intake
+          copy_latest 11289650 tuolumne_lagrange
+          copy_latest 11290000 tuolumne_modesto
+
+          # Merced
+          copy_latest 11264500 merced_happy_isles
+          copy_latest 11266500 merced_pohono
+
+          # Stanislaus
+          copy_latest 11303000 stanislaus_ripon
+
+          # Local tributaries
+          copy_latest 11284400 big_creek
+          copy_latest 11278300 cherry_creek
+
+          # latest.png = Big Creek for README default
+          [ -f chart/big_creek.png ] && cp chart/big_creek.png chart/latest.png
+
           git config user.name  "streamchaser-bot"
           git config user.email "bot@streamchaser"
           git add chart/

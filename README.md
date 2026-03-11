@@ -4,27 +4,83 @@
 
 Groveland, California sits at 2,800 feet on the western slope of the Sierra Nevada, halfway between the Central Valley floor and Yosemite Valley. The Tuolumne River runs through the canyon a thousand feet below town. Big Creek drains the hills right behind the fire station. Cherry Creek drops out of the high country from the north, cold and fast, before it meets the mainstem below.
 
-All of it flows down to Don Pedro Reservoir. All of it tells a story if you know how to read it.
+All of it flows down to Don Pedro Reservoir, through the valley, and into the San Joaquin. All of it tells a story if you know how to read it.
 
-This bot watches three gauges on that watershed — simultaneously, around the clock — and says nothing unless something is worth saying.
+This bot watches eleven gauges across three Sierra Nevada watersheds — simultaneously, around the clock — and says nothing unless something is worth saying.
 
 ---
 
 ## Latest readings
 
-### Big Creek @ Whites Gulch
-*The hometown gauge. The one right out the back door.*
+### 〰 Tuolumne Watershed
+
+#### Tuolumne R at Hetch Hetchy
+*Headwaters. First to spike. Downstream from O'Shaughnessy Dam.*
+
+![Hetch Hetchy](chart/hetch_hetchy.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11276500/)*
+
+#### Tuolumne R Grand Canyon
+*Wild canyon reach. Below Hetch Hetchy, above any valley influence.*
+
+![Grand Canyon](chart/tuolumne_grand_canyon.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11274790/)*
+
+#### Tuolumne R BL Early Intake
+*Pre–Don Pedro. Above Cherry Creek confluence.*
+
+![Early Intake](chart/tuolumne_early_intake.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11276900/)*
+
+#### Tuolumne R BL LaGrange Dam
+*Below all major dams. What actually enters the valley.*
+
+![LaGrange](chart/tuolumne_lagrange.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11289650/)*
+
+#### Tuolumne R at Modesto
+*Valley floor. The bottom line for Central Valley water.*
+
+![Modesto](chart/tuolumne_modesto.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11290000/)*
+
+---
+
+### 〰 Merced Watershed
+
+#### Merced R at Happy Isles
+*Raw Yosemite backcountry signal. Above Pohono Bridge.*
+
+![Happy Isles](chart/merced_happy_isles.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11264500/)*
+
+#### Merced R at Pohono Bridge
+*Classic Yosemite Valley gauge. Spectacular in flood years.*
+
+![Pohono Bridge](chart/merced_pohono.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11266500/)*
+
+---
+
+### 〰 Stanislaus Watershed
+
+#### Stanislaus R at Ripon
+*Valley floor. Below New Melones Reservoir.*
+
+![Ripon](chart/stanislaus_ripon.png)
+*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11303000/)*
+
+---
+
+### 〰 Local Tributaries
+
+#### Big Creek @ Whites Gulch
+*The hometown gauge. No dams. Pure signal. The canary in the watershed.*
 
 ![Big Creek](chart/big_creek.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11284400/)*
 
-### Tuolumne River Below Early Intake
-*The mainstem. The big one. When this moves, the whole canyon moves.*
-
-![Tuolumne at Early Intake](chart/tuolumne_early_intake.png)
-*[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11276900/)*
-
-### Cherry Creek Near Early Intake
+#### Cherry Creek NR Early Intake
 *The high-country canary. Spikes first. Drops fast. Drains the granite.*
 
 ![Cherry Creek](chart/cherry_creek.png)
@@ -34,47 +90,54 @@ This bot watches three gauges on that watershed — simultaneously, around the c
 
 ---
 
-## Why these three gauges
+## How a storm moves through the Sierra
 
 When an atmospheric river comes off the Pacific and hits the Sierra, it doesn't flood all at once. It moves in sequence — and if you're watching the right gauges, you can see it coming.
 
-**Cherry Creek** responds first. It drains the high country above 4,000 feet — bare granite, thin soil, nowhere for the rain to go but down. When a storm hits, Cherry Creek shows it within hours. It's the warning shot. Active since 1956, it drains terrain that doesn't forgive.
+**Happy Isles and Hetch Hetchy** respond first. They drain bare granite above 4,000 feet — thin soil, nowhere for the rain to go but down. When a storm hits, these show it within hours.
 
-**Tuolumne River at Early Intake** is the mainstem, the sum of everything upstream — Cherry Creek plus the Tuolumne's headwaters in Yosemite, all of it converging before the canyon narrows toward Don Pedro. Average flow around 400 cfs in a normal year. During a good storm it can run ten times that. It's been gauged since 1963 and operated in cooperation with [Turlock Irrigation District](https://www.tid.org/), which manages the reservoir downstream. When this gauge rises, Don Pedro is filling.
+**Grand Canyon of the Tuolumne and Early Intake** catch the pulse next as it consolidates in the canyon. This is where you start to see the full shape of the hydrograph forming.
 
-**Big Creek at Whites Gulch** is the local gauge — the one that tells you what's happening right behind town. It drains the oak and pine foothills west of the main Sierra crest, a smaller, flashier watershed that swings from barely alive in August to a serious roar after a good December storm. Six to three hundred cfs in the same creek, same season, different years. Gauged since 1969. In a wet year this creek is worth watching every day.
+**Cherry Creek** — the high-country canary — spikes fast and drops fast. It's the warning shot for the local watershed, draining terrain that doesn't forgive.
 
-Together they cover the full picture: the high country feeding the mainstem, and the foothill creeks doing their own thing. Between them, over 180 years of combined USGS record.
+**LaGrange and Modesto** tell you what the valley is actually going to receive — after the reservoirs have taken their cut, after the diversions have started, after the pulse has smoothed out over days of travel.
 
----
+**Pohono Bridge** shows the Merced doing its own thing — Yosemite Valley floods independently of the Tuolumne, and the two watersheds don't always move together.
 
-## What the charts show
+**Ripon** is the Stanislaus at the valley floor — a different watershed, different reservoir system, different behavior, but part of the same Central Valley water story.
 
-Each chart renders the last 7 days of instantaneous flow against 50+ years of historical context:
+**Big Creek** is the honest gauge. No dams. No regulation. Whatever the Sierra is doing, Big Creek shows it directly.
 
-- **The hydrograph** — current flow in cfs, with annotated 7-day peak and trend direction
-- **Percentile bands** — the green band is the normal range (p25–p75) for this exact day of the year, drawn from the full period of record
-- **Percentile needle** on the right edge — where today's flow sits in the historical distribution, from record low to record high
-- **Rate of change** — whether the gauge is accelerating, holding, or dropping
-- **vs. long-term mean** — today's flow as a percentage of the historical average for this date
+Watch a big storm event: a spike at Hetch Hetchy on Monday becomes a spike at Modesto by Thursday.
+
+Between all eleven gauges: over 400 years of combined USGS record.
 
 ---
 
-## When it posts
+## Alert thresholds
 
-The bot stays silent unless one of five things is true:
+Two threshold systems depending on the gauge type:
+
+**Large/regulated rivers** (Tuolumne mainstem, Merced, Stanislaus) — absolute cfs thresholds:
+
+| Status | Flow | What it means |
+|---|---|---|
+| 🟡 Elevated | ≥ 200 cfs | Active snowmelt or moderate storm response |
+| 🟠 High | ≥ 1,000 cfs | Significant flood potential — monitor closely |
+| 🔴 Flood | ≥ 5,000 cfs | Major flood event |
+
+**Small/unregulated streams** (Big Creek, Cherry Creek) — proportional thresholds:
 
 | Trigger | What it means |
 |---|---|
-| **Rising fast** | Flow increasing ≥10% of the gauge's historical mean per hour — storm is hitting |
-| **New 7-day peak** | Just set a new high water mark for the week |
-| **Above normal** | Current flow exceeds the p75 historical percentile for this date |
-| **Going dry** | Flow drops below 1.0 cfs — drought watch |
-| **Flow returning** | Was below 1.0 cfs yesterday, now rising — the creek woke up |
+| Rising fast | ≥ 10% of historical mean per hour |
+| Above normal | Current flow > p75 historical percentile |
+| Going dry | Flow < 1.0 cfs |
+| Flow returning | Was dry yesterday, now rising |
 
-Thresholds scale proportionally to each gauge's historical mean — so "rising fast" means something different for a 30 cfs foothill creek than it does for an 800 cfs mainstem river.
+All gauges also alert on: **new 7-day peak** (set within 2 hours).
 
-When a trigger fires: Bluesky and Twitter get a post with the chart. A text goes to the phone. Then silence again until the next event.
+Bot stays silent outside these triggers. One post per notable event per gauge.
 
 ---
 
@@ -85,37 +148,35 @@ streamchaser/
 ├── .github/workflows/
 │   └── chase.yml                   # runs every hour via cron
 ├── chart/
-│   ├── big_creek.png               # updated every run
-│   ├── tuolumne_early_intake.png
+│   ├── big_creek.png
 │   ├── cherry_creek.png
+│   ├── hetch_hetchy.png
+│   ├── tuolumne_grand_canyon.png
+│   ├── tuolumne_early_intake.png
+│   ├── tuolumne_lagrange.png
+│   ├── tuolumne_modesto.png
+│   ├── merced_happy_isles.png
+│   ├── merced_pohono.png
+│   ├── stanislaus_ripon.png
 │   └── latest.png                  # = big_creek.png
 ├── src/streamchaser/
-│   ├── __main__.py                 # orchestration, stations, notability logic
+│   ├── __main__.py                 # orchestration, 11 stations, dual thresholds
 │   ├── gauge.py                    # USGS API calls + stat computation
-│   ├── chart.py                    # matplotlib chart generation
-│   └── poster.py                   # Twitter/X, Bluesky, SMS
+│   ├── chart.py                    # portrait chart generation
+│   └── poster.py                   # Twitter/X + Bluesky
 └── README.md
 ```
 
-Runs on GitHub Actions free tier — about 240 minutes/month out of the 2,000 allotted. No server. No database. Just a cron job and some USGS JSON.
+Runs on GitHub Actions free tier — about 600 minutes/month out of the 2,000 allotted (11 gauges × ~3 min each × 24 runs/day). No server. No database. Just a cron job and some USGS JSON.
 
 ---
 
 ## Fork it for your own watershed
 
 1. Fork the repo
-2. Edit the `STATIONS` list in `__main__.py`:
-
-```python
-STATIONS = [
-    ("11284400", "Big Creek @ Whites Gulch",        "#USGS #BigCreek #Groveland"),
-    ("11276900", "Tuolumne R BL Early Intake",      "#USGS #Tuolumne #Groveland"),
-    ("11278300", "Cherry Creek NR Early Intake",    "#USGS #CherryCreek #Tuolumne"),
-    # Add your station — find IDs at waterdata.usgs.gov
-]
-```
-
-3. Add your secrets to GitHub (Settings → Secrets → Actions):
+2. Edit the `STATIONS` list in `__main__.py` — add any USGS station ID, set `mode` to `"proportional"` for small streams or `"absolute"` for large rivers
+3. Find station IDs at [waterdata.usgs.gov](https://waterdata.usgs.gov)
+4. Add secrets to GitHub (Settings → Secrets → Actions):
 
 | Secret | What |
 |---|---|
@@ -125,11 +186,6 @@ STATIONS = [
 | `TWITTER_ACCESS_SECRET` | Access Token Secret |
 | `BLUESKY_HANDLE` | e.g. `yourname.bsky.social` |
 | `BLUESKY_APP_PASSWORD` | bsky.app → Settings → App Passwords |
-| `GMAIL_USER` | Gmail address for sending SMS alerts |
-| `GMAIL_APP_PASSWORD` | Google App Password (16 chars) |
-| `SMS_ADDRESS` | Your carrier SMS gateway, e.g. `2065551234@vtext.com` |
-
-Common carrier gateways: `@vtext.com` (Verizon) · `@tmomail.net` (T-Mobile) · `@txt.att.net` (AT&T) · `@sms.cricketwireless.net` (Cricket)
 
 ---
 

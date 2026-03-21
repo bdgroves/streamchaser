@@ -93,8 +93,6 @@ def check_notable(report, mode: str) -> tuple[bool, str]:
         rising_thresh = max(2.0, min(50.0, mean_flow * 0.10))
         if report.rate_of_change >= rising_thresh:
             return True, f"RISING FAST  +{report.rate_of_change:.1f} cfs/hr"
-        if s.p75 and report.current > s.p75:
-            return True, f"ABOVE NORMAL  {report.current:.1f} cfs > p75 {s.p75:.1f}"
 
     else:  # absolute
         cur  = report.current
@@ -111,8 +109,6 @@ def check_notable(report, mode: str) -> tuple[bool, str]:
         rising_thresh = max(20.0, min(500.0, mean_flow * 0.05))
         if report.rate_of_change >= rising_thresh:
             return True, f"RISING FAST  +{report.rate_of_change:.0f} cfs/hr"
-        if s.p75 and report.current > s.p75:
-            return True, f"ABOVE NORMAL  {cur:,.0f} cfs > p75 {s.p75:,.0f}"
 
     return False, "no notable change"
 
@@ -180,7 +176,8 @@ def main():
         score = _score(reason) if notable else 0
         log.info(f"  Notable  : {notable}  —  {reason}  [score {score}]")
 
-        if notable and score > best_score and chart_path:
+        MIN_SCORE = 50  # must be Rising Fast or higher to post
+        if notable and score >= MIN_SCORE and score > best_score and chart_path:
             best_score = score
             best_event = (report, station_id, station_name, hashtags, reason, chart_path)
 

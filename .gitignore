@@ -29,3 +29,4 @@ secrets.json
 *.swp
 *.swo
 .DS_Store
+chart/

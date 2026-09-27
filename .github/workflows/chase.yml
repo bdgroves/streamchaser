@@ -39,10 +39,13 @@ jobs:
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: python -m streamchaser
 
-      - name: Update charts in repo
+      - name: Publish charts to the charts branch
         if: always()
         run: |
           mkdir -p chart
+          # Start from the charts already published, so stations that didn't
+          # redraw this run keep their last chart.
+          git fetch -q --depth 1 origin charts 2>/dev/null && git archive FETCH_HEAD | tar -x -C chart || true
 
           # Copy latest chart for each station by picking the newest matching file
           copy_latest() {
@@ -73,11 +76,21 @@ jobs:
           # latest.png = Big Creek for README default
           [ -f chart/big_creek.png ] && cp chart/big_creek.png chart/latest.png
 
+          # Publish the charts as a single-commit "charts" branch, replaced every
+          # run. Committing them to main kept every hourly version forever and
+          # grew the repo past 1.5 GB. The README reads from this branch.
+          [ -n "$(ls chart/*.png 2>/dev/null)" ] || { echo "No charts this run"; exit 0; }
+          tmp=$(mktemp -d)
+          cp chart/*.png "$tmp"/
+          cd "$tmp"
+          git init -q -b charts
           git config user.name  "streamchaser-bot"
           git config user.email "bot@streamchaser"
-          git add chart/
-          git diff --staged --quiet || git commit -m "chore: update charts [skip ci]"
-          git push
+          git add -A
+          git commit -q -m "charts: $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f -q "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" charts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Save chart artifacts
         if: always()

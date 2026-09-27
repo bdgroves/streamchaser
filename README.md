@@ -17,31 +17,31 @@ This bot watches eleven gauges across three Sierra Nevada watersheds — simulta
 #### Tuolumne R at Hetch Hetchy
 *Headwaters. First to spike. Downstream from O'Shaughnessy Dam.*
 
-![Hetch Hetchy](chart/hetch_hetchy.png)
+![Hetch Hetchy](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/hetch_hetchy.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11276500/)*
 
 #### Tuolumne R Grand Canyon
 *Wild canyon reach. Below Hetch Hetchy, above any valley influence.*
 
-![Grand Canyon](chart/tuolumne_grand_canyon.png)
+![Grand Canyon](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/tuolumne_grand_canyon.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11274790/)*
 
 #### Tuolumne R BL Early Intake
 *Pre–Don Pedro. Above Cherry Creek confluence.*
 
-![Early Intake](chart/tuolumne_early_intake.png)
+![Early Intake](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/tuolumne_early_intake.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11276900/)*
 
 #### Tuolumne R BL LaGrange Dam
 *Below all major dams. What actually enters the valley.*
 
-![LaGrange](chart/tuolumne_lagrange.png)
+![LaGrange](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/tuolumne_lagrange.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11289650/)*
 
 #### Tuolumne R at Modesto
 *Valley floor. The bottom line for Central Valley water.*
 
-![Modesto](chart/tuolumne_modesto.png)
+![Modesto](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/tuolumne_modesto.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11290000/)*
 
 ---
@@ -51,13 +51,13 @@ This bot watches eleven gauges across three Sierra Nevada watersheds — simulta
 #### Merced R at Happy Isles
 *Raw Yosemite backcountry signal. Above Pohono Bridge.*
 
-![Happy Isles](chart/merced_happy_isles.png)
+![Happy Isles](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/merced_happy_isles.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11264500/)*
 
 #### Merced R at Pohono Bridge
 *Classic Yosemite Valley gauge. Spectacular in flood years.*
 
-![Pohono Bridge](chart/merced_pohono.png)
+![Pohono Bridge](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/merced_pohono.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11266500/)*
 
 ---
@@ -67,7 +67,7 @@ This bot watches eleven gauges across three Sierra Nevada watersheds — simulta
 #### Stanislaus R at Ripon
 *Valley floor. Below New Melones Reservoir.*
 
-![Ripon](chart/stanislaus_ripon.png)
+![Ripon](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/stanislaus_ripon.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11303000/)*
 
 ---
@@ -77,13 +77,13 @@ This bot watches eleven gauges across three Sierra Nevada watersheds — simulta
 #### Big Creek @ Whites Gulch
 *The hometown gauge. No dams. Pure signal. The canary in the watershed.*
 
-![Big Creek](chart/big_creek.png)
+![Big Creek](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/big_creek.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11284400/)*
 
 #### Cherry Creek NR Early Intake
 *The high-country canary. Spikes first. Drops fast. Drains the granite.*
 
-![Cherry Creek](chart/cherry_creek.png)
+![Cherry Creek](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/cherry_creek.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11278300/)*
 
 *Charts updated every hour by GitHub Actions. Posted to social when something notable happens.*
@@ -147,7 +147,7 @@ Bot stays silent outside these triggers. One post per notable event per gauge.
 streamchaser/
 ├── .github/workflows/
 │   └── chase.yml                   # runs every hour via cron
-├── chart/
+├── chart/  (not in main — published to the `charts` branch each run)
 │   ├── big_creek.png
 │   ├── cherry_creek.png
 │   ├── hetch_hetchy.png

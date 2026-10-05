@@ -39,6 +39,7 @@ def test_rules(sc):
     assert m.notable(rep(90, d24=50), True, False)[0] == "STORM"
     assert m.notable(rep(300, high=250), False, True)[0] == "RECORD"
     assert m.notable(rep(300, high=250, years=8), False, True) is None
+    assert m.notable(rep(2, high=0.9), True, False) is None   # dry creek "record"
     assert m.notable(rep(6000), False, True)[0] == "FLOOD"
 
 

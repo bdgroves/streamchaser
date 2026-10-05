@@ -130,6 +130,10 @@ def _get_percentile_stats(site: str) -> PercentileStats:
         }
         try:
             r = requests.get(USGS_STAT, params=params, timeout=10)
+            if r.status_code >= 500:  # the stats service is often briefly busy
+                import time
+                time.sleep(3)
+                r = requests.get(USGS_STAT, params=params, timeout=10)
             r.raise_for_status()
             header = None
             for line in r.text.splitlines():

@@ -3,7 +3,8 @@
 Posts only when a river is doing something unusual for the time of year:
 
   FLOOD   big river at or above 5,000 cfs
-  RECORD  above the highest flow ever measured on this date (20+ years of record)
+  RECORD  above the highest flow ever measured on this date (20+ years of
+          record, and at least 10 cfs)
   STORM   free-flowing stream more than doubled in 24 h and now running above
           normal for the date (Merced in Yosemite, Big Creek)
 
@@ -53,6 +54,7 @@ STATIONS = [
 FLOOD_CFS = 5_000
 STORM_MIN_RISE_CFS = 10
 RECORD_MIN_YEARS = 20
+RECORD_MIN_CFS = 10  # a dry creek at 1 cfs isn't news, even if it's a record
 COOLDOWN = timedelta(days=3)
 LEVELS = {"STORM": 1, "RECORD": 2, "FLOOD": 3}
 STATE_FILE = "state.json"
@@ -65,7 +67,7 @@ def notable(report, free_flowing: bool, big_river: bool) -> tuple[str, str] | No
     cur, s = report.current, report.stats
     if big_river and cur >= FLOOD_CFS:
         return "FLOOD", f"🔴 High water: {cur:,.0f} cfs"
-    if s.high and (s.years or 0) >= RECORD_MIN_YEARS and cur > s.high:
+    if s.high and (s.years or 0) >= RECORD_MIN_YEARS and cur > s.high and cur >= RECORD_MIN_CFS:
         return "RECORD", f"📈 Highest ever for the date: {cur:,.0f} cfs (old record {s.high:,.0f}, {s.years} yrs)"
     if free_flowing:
         before = cur - report.delta_24h

@@ -121,7 +121,7 @@ Only when a river is doing something unusual for the time of year:
 | Post | When |
 |---|---|
 | 🔴 High water | A big river at or above 5,000 cfs |
-| 📈 Highest ever for the date | Above the highest flow ever measured on today's date (gauges with 20+ years of record) |
+| 📈 Highest ever for the date | Above the highest flow ever measured on today's date (gauges with 20+ years of record, and at least 10 cfs) |
 | 🌧️ Storm rise | A free-flowing stream (Merced at Happy Isles and Pohono Bridge, Big Creek) more than doubles in 24 hours and is now above normal for the date |
 
 Most of these reaches sit below dams (Hetch Hetchy, Early Intake, Cherry, La Grange, Ripon), and their releases change every day. So a "new 7-day peak" or a fast rise on its own doesn't post anymore. Before October 2026 it did, about once a day, mostly for routine fall releases.

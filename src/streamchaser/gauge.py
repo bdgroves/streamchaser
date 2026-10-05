@@ -108,18 +108,19 @@ def _get_percentile_stats(site: str) -> PercentileStats:
     today     = datetime.now(timezone.utc)
     month_day = f"{today.month:02d}-{today.day:02d}"
 
+    # USGS statType codes, and the column each one's value comes back in.
     stat_map = {
-        "minimum": "low",
-        "maximum": "high",
-        "mean":    "mean",
-        "P25":     "p25",
-        "P50":     "median",
-        "P75":     "p75",
+        "min":  ("low",    "min_va"),
+        "max":  ("high",   "max_va"),
+        "mean": ("mean",   "mean_va"),
+        "P25":  ("p25",    "p25_va"),
+        "P50":  ("median", "p50_va"),
+        "P75":  ("p75",    "p75_va"),
     }
     results = {}
     years   = None
 
-    for stat_code, field_name in stat_map.items():
+    for stat_code, (field_name, value_col) in stat_map.items():
         params = {
             "format":         "rdb",
             "sites":          site,
@@ -130,26 +131,29 @@ def _get_percentile_stats(site: str) -> PercentileStats:
         try:
             r = requests.get(USGS_STAT, params=params, timeout=10)
             r.raise_for_status()
+            header = None
             for line in r.text.splitlines():
                 if not line.strip() or line.startswith("#") or "\t" not in line:
                     continue
                 parts = line.split("\t")
-                if parts[0].strip() in ("agency_cd", "5s"):
+                if parts[0].strip() == "agency_cd":
+                    header = [c.strip() for c in parts]
                     continue
-                if len(parts) >= 11:
-                    try:
-                        m = int(parts[5])
-                        d = int(parts[6])
-                        if f"{m:02d}-{d:02d}" == month_day:
-                            results[field_name] = float(parts[10])
-                            if years is None:
-                                try:
-                                    years = int(parts[8]) - int(parts[7]) + 1
-                                except (ValueError, IndexError):
-                                    pass
-                            break
-                    except (ValueError, IndexError):
+                if header is None or parts[0].strip() == "5s":
+                    continue
+                row = dict(zip(header, parts))
+                try:
+                    if f"{int(row['month_nu']):02d}-{int(row['day_nu']):02d}" != month_day:
                         continue
+                    results[field_name] = float(row[value_col])
+                    if years is None:
+                        try:
+                            years = int(row["end_yr"]) - int(row["begin_yr"]) + 1
+                        except (ValueError, KeyError):
+                            pass
+                    break
+                except (ValueError, KeyError):
+                    continue
         except requests.exceptions.Timeout:
             log.warning(f"  STAT {stat_code} timed out — skipping")
         except Exception as e:

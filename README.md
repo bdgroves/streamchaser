@@ -86,7 +86,7 @@ This bot watches eleven gauges across three Sierra Nevada watersheds — simulta
 ![Cherry Creek](https://raw.githubusercontent.com/bdgroves/streamchaser/charts/cherry_creek.png)
 *[Live USGS page →](https://waterdata.usgs.gov/monitoring-location/11278300/)*
 
-*Charts updated every hour by GitHub Actions. Posted to social when something notable happens.*
+*Charts updated every hour by GitHub Actions. Posted to Bluesky only when a river does something unusual.*
 
 ---
 
@@ -114,30 +114,23 @@ Between all eleven gauges: over 400 years of combined USGS record.
 
 ---
 
-## Alert thresholds
+## When it posts
 
-Two threshold systems depending on the gauge type:
+Only when a river is doing something unusual for the time of year:
 
-**Large/regulated rivers** (Tuolumne mainstem, Merced, Stanislaus) — absolute cfs thresholds:
-
-| Status | Flow | What it means |
-|---|---|---|
-| 🟡 Elevated | ≥ 200 cfs | Active snowmelt or moderate storm response |
-| 🟠 High | ≥ 1,000 cfs | Significant flood potential — monitor closely |
-| 🔴 Flood | ≥ 5,000 cfs | Major flood event |
-
-**Small/unregulated streams** (Big Creek, Cherry Creek) — proportional thresholds:
-
-| Trigger | What it means |
+| Post | When |
 |---|---|
-| Rising fast | ≥ 10% of historical mean per hour |
-| Above normal | Current flow > p75 historical percentile |
-| Going dry | Flow < 1.0 cfs |
-| Flow returning | Was dry yesterday, now rising |
+| 🔴 High water | A big river at or above 5,000 cfs |
+| 📈 Highest ever for the date | Above the highest flow ever measured on today's date (gauges with 20+ years of record) |
+| 🌧️ Storm rise | A free-flowing stream (Merced at Happy Isles and Pohono Bridge, Big Creek) more than doubles in 24 hours and is now above normal for the date |
 
-All gauges also alert on: **new 7-day peak** (set within 2 hours).
+Most of these reaches sit below dams (Hetch Hetchy, Early Intake, Cherry, La Grange, Ripon), and their releases change every day. So a "new 7-day peak" or a fast rise on its own doesn't post anymore. Before October 2026 it did, about once a day, mostly for routine fall releases.
 
-Bot stays silent outside these triggers. One post per notable event per gauge.
+At most one post per run (the biggest event wins), and a gauge won't post the same thing again for 3 days. A bigger event still posts. Charts redraw every run whether or not anything posts.
+
+**Where it posts:** Bluesky. X is **standing by**: it posts there only when the repository variable `POST_TO_X` is set to `on` (Settings → Secrets and variables → Actions → Variables). It's off while the X developer account has no API credits.
+
+**Checking on it:** `state.json` has what posted last at each gauge, and `logs/posts.jsonl` has every post attempt with any error. If Bluesky starts refusing posts, the run fails once so GitHub sends an email. **Run workflow** with *Dry run* ticked shows what would post.
 
 ---
 
@@ -160,10 +153,13 @@ streamchaser/
 │   ├── stanislaus_ripon.png
 │   └── latest.png                  # = big_creek.png
 ├── src/streamchaser/
-│   ├── __main__.py                 # orchestration, 11 stations, dual thresholds
+│   ├── __main__.py                 # stations and the posting rules
 │   ├── gauge.py                    # USGS API calls + stat computation
 │   ├── chart.py                    # portrait chart generation
 │   └── poster.py                   # Twitter/X + Bluesky
+├── tests/test_rules.py             # offline tests of the posting rules
+├── state.json                      # last post per gauge + network status
+├── logs/posts.jsonl                # every post attempt
 └── README.md
 ```
 

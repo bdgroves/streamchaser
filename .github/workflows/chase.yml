@@ -2,8 +2,13 @@ name: Streamchaser
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '23 * * * *'
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: log what would post, post nothing"
+        type: boolean
+        default: false
 
 jobs:
   chase:
@@ -37,7 +42,23 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           BLUESKY_HANDLE:        ${{ secrets.BLUESKY_HANDLE }}
           BLUESKY_APP_PASSWORD:  ${{ secrets.BLUESKY_APP_PASSWORD }}
+          # X stands by until this repo variable is set to "on"
+          # (Settings → Secrets and variables → Actions → Variables).
+          POST_TO_X:             ${{ vars.POST_TO_X }}
+          DRY_RUN:               ${{ inputs.dry_run && '1' || '' }}
         run: python -m streamchaser
+
+      # Remember what posted (state.json) and every post attempt. Only commits
+      # when something changed, so quiet hours add no commits.
+      - name: Save state and post log
+        if: always()
+        run: |
+          git config user.name  "streamchaser-bot"
+          git config user.email "bot@streamchaser"
+          git add state.json logs/posts.jsonl 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -q -m "chore: update streamchaser state [skip ci]"
+          for i in 1 2 3; do git pull -q --rebase origin main && git push -q && exit 0; sleep 5; done
 
       - name: Publish charts to the charts branch
         if: always()

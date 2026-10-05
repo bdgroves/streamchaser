@@ -73,7 +73,7 @@ jobs:
             local sid=$1
             local dest=$2
             local f=$(ls -t /tmp/streamchaser_${sid}_*.png 2>/dev/null | head -1)
-            [ -n "$f" ] && cp "$f" "chart/${dest}.png"
+            if [ -n "$f" ]; then cp "$f" "chart/${dest}.png"; fi
           }
 
           # Tuolumne chain
@@ -95,7 +95,7 @@ jobs:
           copy_latest 11278300 cherry_creek
 
           # latest.png = Big Creek for README default
-          [ -f chart/big_creek.png ] && cp chart/big_creek.png chart/latest.png
+          if [ -f chart/big_creek.png ]; then cp chart/big_creek.png chart/latest.png; fi
 
           # Publish the charts as a single-commit "charts" branch, replaced every
           # run. Committing them to main kept every hourly version forever and
@@ -103,6 +103,8 @@ jobs:
           [ -n "$(ls chart/*.png 2>/dev/null)" ] || { echo "No charts this run"; exit 0; }
           tmp=$(mktemp -d)
           cp chart/*.png "$tmp"/
+          # The latest run log rides along (replaced each run, no history kept).
+          cp "$GITHUB_WORKSPACE/logs/last_run.log" "$tmp"/ 2>/dev/null || true
           cd "$tmp"
           git init -q -b charts
           git config user.name  "streamchaser-bot"

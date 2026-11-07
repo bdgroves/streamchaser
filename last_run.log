@@ -1,0 +1,32 @@
+2026-11-07 08:58:21  INFO      STREAMCHASER · Sierra Nevada watersheds
+2026-11-07 08:58:21  INFO        USGS IV  site=11276500  period=P7D
+2026-11-07 08:58:23  INFO        Stats (59 yrs): {'low': 33.0, 'high': 827.0, 'mean': 63.0, 'p25': 37.0, 'median': 53.0, 'p75': 62.0}
+2026-11-07 08:58:23  INFO      Tuolumne R at Hetch Hetchy: 55.0 cfs · nothing unusual
+2026-11-07 08:58:23  INFO        USGS IV  site=11274790  period=P7D
+2026-11-07 08:58:25  INFO        Stats (19 yrs): {'low': 4.91, 'high': 348.0, 'mean': 87.0, 'p25': 10.0, 'median': 27.0, 'p75': 140.0}
+2026-11-07 08:58:25  INFO      Tuolumne R Grand Canyon: 15.7 cfs · nothing unusual
+2026-11-07 08:58:25  INFO        USGS IV  site=11276900  period=P7D
+2026-11-07 08:58:26  INFO        Stats (59 yrs): {'low': 22.0, 'high': 270.0, 'mean': 77.0, 'p25': 46.0, 'median': 61.0, 'p75': 79.0}
+2026-11-07 08:58:27  INFO      Tuolumne R BL Early Intake: 48.5 cfs · nothing unusual
+2026-11-07 08:58:27  INFO        USGS IV  site=11289650  period=P7D
+2026-11-07 08:58:28  INFO        Stats (56 yrs): {'low': 0.4, 'high': 569.0, 'mean': 285.0, 'p25': 175.0, 'median': 254.0, 'p75': 392.0}
+2026-11-07 08:58:29  INFO      Tuolumne R BL LaGrange Dam: 196.0 cfs · nothing unusual
+2026-11-07 08:58:29  INFO        USGS IV  site=11290000  period=P7D
+2026-11-07 08:58:30  INFO        Stats (86 yrs): {'low': 82.0, 'high': 2550.0, 'mean': 695.0, 'p25': 293.0, 'median': 514.0, 'p75': 847.0}
+2026-11-07 08:58:31  INFO      Tuolumne R at Modesto: 158.0 cfs · nothing unusual
+2026-11-07 08:58:31  INFO        USGS IV  site=11264500  period=P7D
+2026-11-07 08:58:32  INFO        Stats (111 yrs): {'low': 2.3, 'high': 278.0, 'mean': 43.0, 'p25': 8.9, 'median': 18.0, 'p75': 65.0}
+2026-11-07 08:58:33  INFO      Merced R at Happy Isles: 16.9 cfs · nothing unusual
+2026-11-07 08:58:33  INFO        USGS IV  site=11266500  period=P7D
+2026-11-07 08:58:34  INFO        Stats (110 yrs): {'low': 12.0, 'high': 485.0, 'mean': 79.0, 'p25': 22.0, 'median': 38.0, 'p75': 117.0}
+2026-11-07 08:58:35  INFO      Merced R at Pohono Bridge: 28.0 cfs · nothing unusual
+2026-11-07 08:58:35  INFO        USGS IV  site=11303000  period=P7D
+2026-11-07 08:58:36  INFO        Stats (86 yrs): {'low': 14.0, 'high': 2240.0, 'mean': 391.0, 'p25': 243.0, 'median': 322.0, 'p75': 430.0}
+2026-11-07 08:58:37  INFO      Stanislaus R at Ripon: 245.0 cfs · nothing unusual
+2026-11-07 08:58:37  INFO        USGS IV  site=11284400  period=P7D
+2026-11-07 08:58:39  INFO        Stats (57 yrs): {'low': 0.0, 'high': 1.6, 'mean': 0.1, 'p25': 0.0, 'median': 0.0, 'p75': 0.04}
+2026-11-07 08:58:39  INFO      Big Creek @ Whites Gulch: 0.0 cfs · nothing unusual
+2026-11-07 08:58:39  INFO        USGS IV  site=11278300  period=P7D
+2026-11-07 08:58:40  INFO        Stats (66 yrs): {'low': 3.7, 'high': 389.0, 'mean': 37.0, 'p25': 12.0, 'median': 15.0, 'p75': 21.0}
+2026-11-07 08:58:41  INFO      Cherry Creek NR Early Intake: 12.3 cfs · nothing unusual
+2026-11-07 08:58:41  INFO      Nothing unusual on any river. Silent run.
